@@ -14,10 +14,10 @@ public class KorvTest {
         do{
             ps=new Person();
             kvm.feedSausageToPerson(ps);
-            if(s==-1){assertTrue(ps.getHungryStatus());}
-            assertFalse(ps.getHungryStatus());
             j-=1;
-        }while (j>-1);
+        }while (j>=-1);
+        System.out.println(ps.getHungryStatus());
+        assertTrue(ps.getHungryStatus());
     }
 }
 

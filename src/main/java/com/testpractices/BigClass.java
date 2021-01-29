@@ -28,7 +28,7 @@ public class BigClass {
             number=num;
         }
         else {
-            System.out.println("Negative number is now allowed.");
+            System.out.println("Negative number is not allowed.");
         }
 
     }
@@ -51,7 +51,7 @@ public class BigClass {
         if(num>=0){
             number+=num;
         }else{
-            System.out.println("Negative number is now allowed.");
+            System.out.println("Negative number is not allowed.");
         }
     }
 }

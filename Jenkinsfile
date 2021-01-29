@@ -8,12 +8,12 @@ pipeline{
         }
         stage('Build'){
             steps{
-                bat "mvn compile"
+                sh "mvn compile"  // "bat" for Windows, "sh" for MacOs and Linux
             }
         }
         stage('Test'){
             steps{
-                bat "mvn test"
+                sh "mvn test"
             }
             post{
                 always{

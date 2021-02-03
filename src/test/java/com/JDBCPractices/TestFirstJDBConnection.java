@@ -10,7 +10,6 @@ public class TestFirstJDBConnection {
     @Test
     void TestConn()
             throws SQLException, IOException {
-        FirstJDBConnection fj=new FirstJDBConnection();
-        fj.JDBConnector();
+        JDBCUtil.getConnector();
     }
 }

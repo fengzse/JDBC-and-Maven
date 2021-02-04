@@ -1,4 +1,4 @@
-package com.JDBCPractices;
+package com.JDBCUtils;
 
 
 import java.io.IOException;
@@ -8,8 +8,7 @@ import java.util.Properties;
 
 public class JDBCUtil {
     // 获取JDBC连接
-    public static Connection getConnector()
-            throws SQLException, IOException {
+    public static Connection getConnector(){
         Connection conn = null;
         Properties pro;
         /*
@@ -55,7 +54,7 @@ public class JDBCUtil {
             System.out.println("JDBC successfully connected with "+conn);
             return conn;
         }
-        catch (ClassNotFoundException exp){
+        catch (ClassNotFoundException | SQLException | IOException exp){
             System.out.println("Error:Unable to load Driver class");
             System.exit(1);
         }
@@ -66,10 +65,11 @@ public class JDBCUtil {
         在数据库操作中会使用PreparedStatement，是Statement的子接口，因此这里的形参类型可以用父接口
         Statement需要导入，java.sql.*
      */
-    public void closeResource(Connection conn, Statement ps){
+    public static void closeResource(Connection conn, Statement ps){
         try{
             if(ps != null){
                 ps.close();
+                System.out.println("Statement close successfully");
             }
         }catch (SQLException e){
             e.printStackTrace();
@@ -77,17 +77,41 @@ public class JDBCUtil {
         try{
             if(conn != null){
                 conn.close();
+                System.out.println("Connection break successfully");
             }
         }catch (SQLException e){
             e.printStackTrace();
         }
-
     }
 
-}
-
-class TestC{
-    public static void main(String[] args) throws SQLException, IOException {
-        JDBCUtil.getConnector();
+    public static void closeResource(Connection conn, Statement ps, ResultSet rs){
+        // 关闭statement语句通道
+        try{
+            if(ps != null){
+                ps.close();
+                System.out.println("Statement close successfully");
+            }
+        }catch (SQLException e){
+            e.printStackTrace();
+        }
+        // 关闭结果集
+        try {
+            if(rs != null){
+                rs.close();
+                System.out.println("ResultSet closed");
+            }
+        }catch (SQLException e){
+            e.printStackTrace();
+        }
+        // 关闭数据库连接
+        try{
+            if(conn != null){
+                conn.close();
+                System.out.println("Connection break successfully");
+            }
+        }catch (SQLException e){
+            e.printStackTrace();
+        }
     }
 }
+

@@ -56,7 +56,9 @@ public class PreStatementPrc {
             /*
                 还是注意util的Date和sql下的Date不是同一个类，
                 需要先用util下Date获取时间，再调用getTime()获取时间戳传给sql下的Date()，new Date()空参为当前时间
-                需要java的Date类的时候要声明和new全类名
+                需要java的Date类的时候要声明和new全类名, sql的Date是util的Date的子类。Java的时间操作都是使用util下的Date，要
+                update或insert进数据库就需要一个转换
+                但是如果是使用setObject就可以避免这个麻烦
              */
             java.util.Date date=new java.util.Date();
             ps=conn.prepareStatement(sql);
@@ -108,7 +110,7 @@ public class PreStatementPrc {
     public Customers getCustomer(String sql, Object...args) {
         Connection conn = null;
         PreparedStatement ps = null;
-        // 查询结果保存在结果集对象中
+        // 查询结果保存在结果集对象中，ResultSet是一个接口，实现对象为PreparedStatement对象实现调用的executeQuery()
         ResultSet rs = null;
 
         try {
@@ -122,7 +124,7 @@ public class PreStatementPrc {
                 ps.setObject(i+1,args[0]);
             }
 
-            //增删改为execute(), 查询为executeQuery()，查询目标为某条记录，即模型的某个实例
+            //获取结果集实例：增删改为execute(), 查询为executeQuery()，查询目标为某条记录，即模型的某个实例
             rs=ps.executeQuery();
 
             /*
@@ -162,6 +164,57 @@ public class PreStatementPrc {
 
         finally {
             JDBCUtil.closeResource(conn,ps,rs);
+        }
+        return null;
+    }
+
+    /*
+    以上是针对某个具体模型类的查询，下面尝试编写通用的查询
+    1. 使用泛型，能够接收所有类
+    2. 在参数中需要传递一个Class对象，上面的查询时直接实例化Customers类，通过Customers.class反射出属性field。不能直接用实例ctm调用属性
+       因为属性名称都是确定的，而查询中需要通过数据库列名反射Field获得对应的属性，有一个比对名称的过程。直接获取实例属性没有对应的方法进行比对
+    3. 在查询类定义中可以直接传递泛型Class对象，通过Class对象获取需要返回的实例，同时Class对象可以直接反射需要的属性或方法，不再需要
+       Customers.class获取类的内存加载
+     */
+    public <T> T getQuery(Class<T> cls, String sql, Object...args){
+        Connection conn = null;
+        PreparedStatement ps =null;
+        ResultSet rs = null;
+
+        try {
+            conn = JDBCUtil.getConnector();
+            ps = conn.prepareStatement(sql);
+
+            for (int i=0; i<args.length; i++){
+                ps.setObject(i+1, args[i]);
+            }
+            rs = ps.executeQuery();
+
+            ResultSetMetaData re = rs.getMetaData();
+            int columnCount=re.getColumnCount();
+
+            if(rs.next()){
+                String columnLabel;
+                Field field;
+                Object columnValue;
+                T inst= cls.newInstance();
+
+                for(int i=0; i<columnCount; i++){
+                    columnLabel= re.getColumnLabel(i+1);
+                    columnValue=rs.getObject(columnLabel);
+                    field=cls.getDeclaredField(columnLabel);
+                    field.setAccessible(true);
+                    field.set(inst,columnValue);
+                }
+                setForTest(true);
+                System.out.println(inst);
+                return inst;
+            }
+        } catch (SQLException | IllegalAccessException | InstantiationException | NoSuchFieldException e) {
+            e.printStackTrace();
+        }
+        finally {
+            JDBCUtil.closeResource(conn, ps,rs);
         }
         return null;
     }

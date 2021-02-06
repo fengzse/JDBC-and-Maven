@@ -63,4 +63,12 @@ public class TestFirstJDBConnection {
         assertEquals(expected,actual);
 
     }
+
+    @Test
+    void TestGetQuery_All(){
+        String sql = "select id, name, email,birth from customers where id < 10";
+        PreStatementPrc pstm = new PreStatementPrc();
+        pstm.getAllQueries(Customers.class,sql);
+        assertTrue(pstm.getForTest());
+    }
 }

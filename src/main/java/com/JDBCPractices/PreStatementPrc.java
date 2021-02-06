@@ -6,6 +6,8 @@ import java.lang.reflect.Field;
 import java.sql.*;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.List;
 
 public class PreStatementPrc {
     // 声明boolean是为了在测试中进行断言, forTest=false设置默认值，每个新建实例的forTest都会是false
@@ -76,6 +78,7 @@ public class PreStatementPrc {
     /*
         创建一个可以实现所有增删改的通用方法, 查询单写
         Object...args 也可以写成接收一个Object数组 Object[] args, 编写实参的时候直接构成数组传递
+        但是写成可变参数是因为可变参数支持不传参，而写成Object[] args就必须传参
         增删改不需要泛型，因为直接通过预定义sql操作表，查询时调取模型记录，就需要泛型来调取不同的模型
      */
     public void commonUpdate(String sql, Object...args){
@@ -124,7 +127,14 @@ public class PreStatementPrc {
                 ps.setObject(i+1,args[0]);
             }
 
-            //获取结果集实例：增删改为execute(), 查询为executeQuery()，查询目标为某条记录，即模型的某个实例
+            /*获取结果集实例：增删改为execute(), 查询为executeQuery()，查询目标为某条记录，即模型的某个实例
+              在这里注意一个问题，就是当查询的列少于数据表的列的时候，实际上在下面这一步就剔除或者说根本没查询预编译sql
+              语句里没有被select的列，因为结果集rs的赋值对象是ps.executeQuery()，而ps是根据sql预编译的查询返回的
+              因此rs结果集里只有通过sql语句传递给ps的要执行select的列。例如表有7列，但是只select其中3列，
+              则ps.executeQuery()就只返回被select的3列给结果集。从而下文的获取元数据等信息也就仅为这3列的元数据，比如查询
+              出的列数，列名等
+             */
+
             rs=ps.executeQuery();
 
             /*
@@ -190,8 +200,8 @@ public class PreStatementPrc {
             }
             rs = ps.executeQuery();
 
-            ResultSetMetaData re = rs.getMetaData();
-            int columnCount=re.getColumnCount();
+            ResultSetMetaData meta = rs.getMetaData();
+            int columnCount=meta.getColumnCount();
 
             if(rs.next()){
                 String columnLabel;
@@ -200,7 +210,7 @@ public class PreStatementPrc {
                 T inst= cls.newInstance();
 
                 for(int i=0; i<columnCount; i++){
-                    columnLabel= re.getColumnLabel(i+1);
+                    columnLabel= meta.getColumnLabel(i+1);
                     columnValue=rs.getObject(columnLabel);
                     field=cls.getDeclaredField(columnLabel);
                     field.setAccessible(true);
@@ -218,4 +228,60 @@ public class PreStatementPrc {
         }
         return null;
     }
+
+    /*
+    上一个类是查询泛型类的单条数据记录，而要查询某个类模型在数据库表中的记录集合(多条记录)就需要先创建一个集合，如列表
+    下面编写通用多记录查询
+    复习：public 后面的<T> 表示这是一个泛型方法，表示返回一个泛型的列表List<T>，这是针对整个方法的泛型声明
+    而List<T>中的泛型<T>表示这个列表接收泛型元素.因为根据集合列表定义，创建集合对象的时候必须在< >指明集合对象元素的类型
+    这是针对列表本身的泛型声明。二者可以不同，如方法声明为T，列表声明为V，那么待接收的实参类型可以不一致。声明为一致，
+    表明二者待接收实参类型是同一个
+     */
+
+    public <T> List<T> getAllQueries(Class<T> cls, String sql, Object...args){
+        Connection conn = null;
+        PreparedStatement ps = null;
+        ResultSet rs = null;
+        List<T> query_all= new ArrayList<T>();
+
+        try {
+            conn = JDBCUtil.getConnector();
+            ps = conn.prepareStatement(sql);
+            for(int i=0; i<args.length;i++){
+                ps.setObject(i+1,args[i]);
+            }
+            rs = ps.executeQuery();
+
+            ResultSetMetaData meta = rs.getMetaData();
+            int columnCount = meta.getColumnCount();
+
+            // 将if写为while循环，使next指针随循环下移到下一条记录，直到下一个没有记录返回false终止循环
+            while(rs.next()){
+                // 随循环创建新实例，每个实例对应一条表中的记录
+                T instance = cls.newInstance();
+                Field field;
+                Object columnValue;
+                String columnLabel;
+
+                for(int i=0; i<columnCount;i++){
+                    columnLabel=meta.getColumnLabel(i+1);
+                    columnValue=rs.getObject(columnLabel);
+                    field=cls.getDeclaredField(columnLabel);
+                    field.setAccessible(true);
+                    field.set(instance,columnValue);
+                }
+                query_all.add(instance);
+            }
+            System.out.println(query_all.toString());
+            setForTest(true);
+            return query_all;
+        }catch (SQLException | IllegalAccessException | InstantiationException | NoSuchFieldException e){
+            e.printStackTrace();
+        }
+        finally {
+            JDBCUtil.closeResource(conn,ps,rs);
+        }
+        return null;
+    }
+
 }

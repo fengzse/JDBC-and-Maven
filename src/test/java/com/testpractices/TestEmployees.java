@@ -120,11 +120,11 @@ public class TestEmployees {
         double expected_2=12345.67*percentage_2+12345.67;
         double expected_3=12345.67*percentage_3+12345.67;
 
-        Employees.SalaryIncr(emp,percentage_1);
+        emp.SalaryIncr(emp,percentage_1);
         double actual_1 = emp.getSalary();
-        Employees.SalaryIncr(emp,percentage_2);
+        emp.SalaryIncr(emp,percentage_2);
         double actual_2=emp.getSalary();
-        Employees.SalaryIncr(emp,percentage_3);
+        emp.SalaryIncr(emp,percentage_3);
         double actual_3=emp.getSalary();
 
         assertEquals(expected_1,actual_1);
@@ -156,9 +156,9 @@ public class TestEmployees {
         double expected_emp_3=22222.33*percentage+22222.33;
         double expected_emp_5=11111.99*percentage+11111.99;
 
-        Employees.SalaryIncrSpecificEplee(emp_3,percentage);
+        emp.SalaryIncrSpecificEplee(emp_3,percentage);
         double actual_emp_3=emp_3.getSalary();
-        Employees.SalaryIncrSpecificEplee(emp_5,percentage);
+        emp.SalaryIncrSpecificEplee(emp_5,percentage);
         double actual_emp_5=emp_5.getSalary();
 
         assertEquals(expected_emp_3,actual_emp_3);

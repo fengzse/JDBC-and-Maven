@@ -100,7 +100,7 @@ public class Employees{
         temp_id=0;
     }
 
-    public static void SalaryIncr(Employees sepcificEmployee, double percentage) {
+    public void SalaryIncr(Employees sepcificEmployee, double percentage) {
         if(percentage>0 && percentage<=1){
             sepcificEmployee.setSalary(sepcificEmployee.salary+=sepcificEmployee.salary*percentage);
         }else {
@@ -108,7 +108,7 @@ public class Employees{
         }
     }
 
-    public static void SalaryIncrSpecificEplee(Employees SpecificEmployee, double percentage) {
+    public void SalaryIncrSpecificEplee(Employees SpecificEmployee, double percentage) {
         for (Employees employee : employees) {
             if (employee == SpecificEmployee) {
                 SalaryIncr(SpecificEmployee,percentage);

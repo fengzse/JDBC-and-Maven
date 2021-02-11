@@ -249,7 +249,7 @@ public class PreStatementPrc {
         Connection conn = null;
         PreparedStatement ps = null;
         ResultSet rs = null;
-        List<T> query_all= new ArrayList<T>();
+        List<T> query_all= new ArrayList<>();
 
         try {
             conn = JDBCUtil.getConnector();

@@ -14,33 +14,46 @@ public class TestFirstJDBConnection {
 
     @Test
     void TestConn() {
+        int ins;
         PreStatementPrc pstm=new PreStatementPrc();
-        pstm.insertTest();
+        ins = pstm.insertTest();
+        assertEquals(1,ins);
     }
 
     @Test
     void TestUpdate(){
+        int actual;
         PreStatementPrc pstm = new PreStatementPrc();
-        pstm.updateTest();
+        actual = pstm.updateTest();
+        assertEquals(1, actual);
     }
 
     @Test
     void TestCommonUpdate() throws ParseException {
+        int actual;
         String sql="insert into customers(name, email, birth) values(?,?,?)";
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
         Date date=sdf.parse("1983-06-28");
         java.sql.Date jsd=new java.sql.Date(date.getTime());
         PreStatementPrc pstm = new PreStatementPrc();
-        pstm.commonUpdate(sql, "刘涛","azhu@gmail.com",jsd);
-        assertFalse(pstm.getForTest());
+        actual=pstm.commonUpdate(sql, "刘涛","azhu@gmail.com",jsd);
+        assertEquals(1,actual);
+    }
+
+    @Test
+    void TestDelete(){
+        int actual;
+        String sql = "delete from customers where name = ?";
+        PreStatementPrc pstm = new PreStatementPrc();
+        actual = pstm.commonUpdate(sql, "哪吒");
+        assertEquals(1,actual);
     }
 
     @Test
     void TestQueryCustomer(){
         String sql = "select id, name, email,birth from customers where name=?";
         PreStatementPrc pstm = new PreStatementPrc();
-        pstm.getCustomer(sql,"迪丽热巴");
-        assertTrue(pstm.getForTest());
+        assertNotNull(pstm.getCustomer(sql,"迪丽热巴"));
     }
 
     @Test
@@ -68,7 +81,6 @@ public class TestFirstJDBConnection {
     void TestGetQuery_All(){
         String sql = "select id, name, email,birth from customers where id < 10";
         PreStatementPrc pstm = new PreStatementPrc();
-        pstm.getAllQueries(Customers.class,sql);
-        assertTrue(pstm.getForTest());
+        assertTrue(pstm.getAllQueries(Customers.class,sql).size()>0);
     }
 }

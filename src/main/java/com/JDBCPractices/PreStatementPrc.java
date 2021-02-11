@@ -10,16 +10,12 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class PreStatementPrc {
-    // 声明boolean是为了在测试中进行断言, forTest=false设置默认值，每个新建实例的forTest都会是false
-    private boolean forTest=false;
 
-    public void setForTest(boolean t){forTest=t;}
-    public boolean getForTest(){return forTest;}
-
-    public void insertTest(){
+    public int insertTest(){
         // 调用工具类连接数据库
         Connection conn = null;
         PreparedStatement ps = null;
+        int inserted=0;
         try{
             // 获取数据库连接
             conn=JDBCUtil.getConnector();
@@ -38,8 +34,9 @@ public class PreStatementPrc {
             // 注意调用的是java.util.Date类， parse()方法作用是将给定的字符串按照SimpleDateFormat指定的日期格式解析为一个Date对象。
             java.util.Date date=sdf.parse("1000-02-04");
             ps.setDate(3,new Date(date.getTime()));
-            ps.execute();
+            inserted=ps.executeUpdate();
             System.out.println("Insert successfully");
+            return inserted;
 
         }catch (SQLException | ParseException e) {
             e.printStackTrace();
@@ -47,11 +44,13 @@ public class PreStatementPrc {
         finally {
             JDBCUtil.closeResource(conn,ps);
         }
+        return inserted;
     }
 
-    public void updateTest() {
+    public int updateTest() {
         Connection conn=null;
         PreparedStatement ps = null;
+        int updated=0;
         try{
             conn = JDBCUtil.getConnector();
             String sql = "update customers set birth=? where name=?";
@@ -66,14 +65,16 @@ public class PreStatementPrc {
             ps=conn.prepareStatement(sql);
             ps.setDate(1, new Date(date.getTime()) );
             ps.setObject(2,"哪吒");
-            ps.execute();
+            updated=ps.executeUpdate();
             System.out.println("Updated done");
+            return updated;
         }catch (SQLException e){
             e.printStackTrace();
         }
         finally {
             JDBCUtil.closeResource(conn,ps);
         }
+        return updated;
     }
     /*
         创建一个可以实现所有增删改的通用方法, 查询单写
@@ -81,9 +82,10 @@ public class PreStatementPrc {
         但是写成可变参数是因为可变参数支持不传参，而写成Object[] args就必须传参
         增删改不需要泛型，因为直接通过预定义sql操作表，查询时调取模型记录，就需要泛型来调取不同的模型
      */
-    public void commonUpdate(String sql, Object...args){
+    public int commonUpdate(String sql, Object...args){
         Connection conn=null;
         PreparedStatement ps=null;
+        int updated=0;
         try {
             conn=JDBCUtil.getConnector();
             // 只传递预编译的sql，其他参数通过ps的setObject方法传入
@@ -92,18 +94,25 @@ public class PreStatementPrc {
                 //只能setObject，因为待传入实参类型未知
                 ps.setObject(i+1,args[i]);
             }
-            ps.execute();
             /*
-                在try块中只有正确执行execute()完毕，才顺序设定forTest=true，
-                如果执行中出错抛出异常，就会直接跳过boolean设置，跳到catch块捕获异常，可以在测试中编写会出错的代码以assertFalse
+                ps.execute()是一个通用的执行操作，返回一个boolean类型，如果执行的是查询操作，有返回结果，则此方法返回true
+                如果执行的是增，删，改操作，没有返回值，则此方法返回false
+                对于查询操作已经直接调用了ps.executeQuery()返回结果集，因此增删改部分最好也调用专用方法，即 ps.executeUpdate()
+                ps.executeUpdate() 方法返回一个整数，update了几行记录就返回整数几，没有对任何记录执行操作就返回0
+                将当前增删改方法的返回类型改为 int 以接收ps.executeUpdate()的返回值，同时在测试的时候可以直接测试返回整数值是否匹配
+                将updated设置初始值为0，若增删改失败，未对任何记录行进行操作，则返回updated的时候就会返回0
+                将上面的两个方法以及相关测试方法也进行相应的修改
              */
-            setForTest(true);
+            updated=ps.executeUpdate();
+            return updated;
+
         }catch (SQLException e){
             e.printStackTrace();
         }
         finally {
             JDBCUtil.closeResource(conn,ps);
         }
+        return updated;
     }
 
     /*
@@ -165,7 +174,6 @@ public class PreStatementPrc {
 
                 }
                 System.out.println(ctm);
-                setForTest(true);
                 return ctm;
             }
         }catch (SQLException | NoSuchFieldException | IllegalAccessException e){
@@ -216,7 +224,6 @@ public class PreStatementPrc {
                     field.setAccessible(true);
                     field.set(inst,columnValue);
                 }
-                setForTest(true);
                 System.out.println(inst);
                 return inst;
             }
@@ -273,7 +280,6 @@ public class PreStatementPrc {
                 query_all.add(instance);
             }
             System.out.println(query_all.toString());
-            setForTest(true);
             return query_all;
         }catch (SQLException | IllegalAccessException | InstantiationException | NoSuchFieldException e){
             e.printStackTrace();

@@ -1,3 +1,9 @@
+/*
+I collaborated this lab with Ruiling for the first part. We created two modules, one with two classes and
+the other with only one class. I hand in the module with a single class. Ruiling hands in the other
+For the "VG" part, we did individually
+ */
+
 package com.testpractices;
 
 import java.util.ArrayList;
@@ -100,6 +106,7 @@ public class Employees{
         temp_id=0;
     }
 
+    // VG part
     public void SalaryIncr(Employees sepcificEmployee, double percentage) {
         if(percentage>0 && percentage<=1){
             sepcificEmployee.setSalary(sepcificEmployee.salary+=sepcificEmployee.salary*percentage);

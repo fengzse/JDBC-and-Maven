@@ -289,5 +289,111 @@ public class PreStatementPrc {
         }
         return null;
     }
+    /*
+    以上的方法都是在方法内建立数据库连接，增删改查全部封装在方法里，导致在方法外部无法灵活使用数据库事务，因为不是所有的数据库操作都需要使用
+    事务，因此自动提交的设置就不能写死在增删改查的方法里，而应该由调用方法自己定义
+    1. 调用方法需要自行建立连接，Connection conn = null; 在try块中建立conn = JDBCUtil.getConnector();
+    2. 调用update或query方法，因为此时update或query方法内部不再需要创建数据库连接，因此需要将conn作为参数传入方法
+    3. 可以根据调用方法需要灵活设置事务的开启与关闭，数据的提交与回滚
+    4. ps和rs是update或query方法定义的，因此需要在方法内定义资源关闭，但是conn是外部定义的，不能定义关闭，因此关闭方法对应参数传入null，同理
+       外部方法定义连接conn，则必须负责关闭连接conn，而ps和rs因为已经被update或query方法关闭，因此对应参数传入null
+     */
 
+    public void transactionUpdate(Connection conn, String sql, Object...args){
+        PreparedStatement ps = null;
+
+        try {
+            ps=conn.prepareStatement(sql);
+            for(int i=0; i< args.length;i++){
+                ps.setObject(i+1,args[i]);
+            }
+            ps.executeUpdate();
+        }catch (SQLException e) {
+            e.printStackTrace();
+        }
+        finally {
+            JDBCUtil.closeResource(null,ps);
+        }
+    }
+
+    public <T> T transactionQuery(Connection conn,Class<T> cls, String sql, Object...args){
+        PreparedStatement ps = null;
+        ResultSet rs = null;
+        try {
+            ps = conn.prepareStatement(sql);
+
+            for (int i=0; i<args.length; i++){
+                ps.setObject(i+1, args[i]);
+            }
+            rs = ps.executeQuery();
+
+            ResultSetMetaData meta = rs.getMetaData();
+            int columnCount=meta.getColumnCount();
+
+            if(rs.next()){
+                String columnLabel;
+                Field field;
+                Object columnValue;
+                T inst= cls.newInstance();
+
+                for(int i=0; i<columnCount; i++){
+                    columnLabel= meta.getColumnLabel(i+1);
+                    columnValue=rs.getObject(columnLabel);
+                    field=cls.getDeclaredField(columnLabel);
+                    field.setAccessible(true);
+                    field.set(inst,columnValue);
+                }
+                System.out.println(inst);
+                return inst;
+            }
+        } catch (SQLException | IllegalAccessException | InstantiationException | NoSuchFieldException e) {
+            e.printStackTrace();
+        }
+        finally {
+            JDBCUtil.closeResource(null,ps,rs);
+        }
+        return null;
+    }
+
+    public <T> List<T> transactionQueryAll(Connection conn, Class<T> cls, String sql, Object...args){
+        PreparedStatement ps = null;
+        ResultSet rs = null;
+        List<T> query_all = new ArrayList<>();
+
+        try {
+            ps = conn.prepareStatement(sql);
+            for(int i=0; i<args.length;i++){
+                ps.setObject(i+1,args[i]);
+            }
+            rs = ps.executeQuery();
+
+            ResultSetMetaData meta = rs.getMetaData();
+            int columnCount = meta.getColumnCount();
+
+            // 将if写为while循环，使next指针随循环下移到下一条记录，直到下一个没有记录返回false终止循环
+            while(rs.next()){
+                // 随循环创建新实例，每个实例对应一条表中的记录
+                T instance = cls.newInstance();
+                Field field;
+                Object columnValue;
+                String columnLabel;
+
+                for(int i=0; i<columnCount;i++){
+                    columnLabel=meta.getColumnLabel(i+1);
+                    columnValue=rs.getObject(columnLabel);
+                    field=cls.getDeclaredField(columnLabel);
+                    field.setAccessible(true);
+                    field.set(instance,columnValue);
+                }
+                query_all.add(instance);
+            }
+            return query_all;
+        }catch (SQLException | IllegalAccessException | InstantiationException | NoSuchFieldException e){
+            e.printStackTrace();
+        }
+        finally {
+            JDBCUtil.closeResource(null,ps,rs);
+        }
+        return null;
+    }
 }

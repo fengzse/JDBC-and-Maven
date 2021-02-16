@@ -128,8 +128,8 @@ public class TestEmployees {
         double actual_3=emp.getSalary();
 
         assertEquals(expected_1,actual_1);
-        assertNotEquals(expected_3,actual_3);
         assertNotEquals(expected_2,actual_2);
+        assertNotEquals(expected_3,actual_3);
 
         emp.toCleanTestStaticData();            // TODO: to clean static data after testing
         assertEquals(0,emp.getList().size());

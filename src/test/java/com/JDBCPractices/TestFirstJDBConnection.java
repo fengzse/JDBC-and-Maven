@@ -2,10 +2,13 @@ package com.JDBCPractices;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+import com.JDBCUtils.JDBCUtil;
 import com.JDBClasses.CustomerOrders;
 import com.JDBClasses.Customers;
 import org.junit.jupiter.api.Test;
 
+import java.sql.Connection;
+import java.sql.SQLException;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -82,5 +85,36 @@ public class TestFirstJDBConnection {
         String sql = "select id, name, email,birth from customers where id < 10";
         PreStatementPrc pstm = new PreStatementPrc();
         assertTrue(pstm.getAllQueries(Customers.class,sql).size()>0);
+    }
+
+    @Test
+    void TestTranUpdate(){
+        Connection conn = null;
+        PreStatementPrc pstm;
+        try {
+            conn= JDBCUtil.getConnector();
+            conn.setAutoCommit(false);
+            pstm=new PreStatementPrc();
+
+            String sql1 = "update user_table set balance = balance - 100 where user = ?";
+            pstm.transactionUpdate(conn,sql1,"AA");
+
+            String sql2 = "update user_table set balance = balance + 100 where user = ?";
+            pstm.transactionUpdate(conn,sql2,"BB");
+
+            conn.commit();
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+            try {
+                conn.rollback();
+            } catch (SQLException ex) {
+                ex.printStackTrace();
+            }
+            finally {
+                JDBCUtil.closeResource(conn,null,null);
+            }
+        }
+
     }
 }

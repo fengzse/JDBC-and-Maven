@@ -1,2 +1,3 @@
 # first_maven
-practice
+Practice projects with Maven and
+JDBC learning

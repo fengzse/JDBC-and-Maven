@@ -90,17 +90,17 @@ public class TestFirstJDBConnection {
     @Test
     void TestTranUpdate(){
         Connection conn = null;
-        PreStatementPrc pstm;
+        BaseDAO bdao;
         try {
             conn= JDBCUtil.getConnector();
             conn.setAutoCommit(false);
-            pstm=new PreStatementPrc();
+            bdao= new BaseDAO();
 
             String sql1 = "update user_table set balance = balance - 100 where user = ?";
-            pstm.transactionUpdate(conn,sql1,"AA");
+            bdao.transactionUpdate(conn,sql1,"AA");
 
             String sql2 = "update user_table set balance = balance + 100 where user = ?";
-            pstm.transactionUpdate(conn,sql2,"BB");
+            bdao.transactionUpdate(conn,sql2,"BB");
 
             conn.commit();
 

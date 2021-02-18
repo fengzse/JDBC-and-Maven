@@ -6,6 +6,10 @@ import java.io.InputStream;
 import java.sql.*;
 import java.util.Properties;
 
+/*
+ 工具类内部的方法都创建为静态方法，因为其功能单一，只是创建连接和销毁连接的工厂，没有必要创建实例和方法副本消耗资源，
+ 如果要创建多个连接等待调用，应该使用连接池
+ */
 public class JDBCUtil {
     // 获取JDBC连接
     public static Connection getConnector(){
@@ -47,9 +51,9 @@ public class JDBCUtil {
                DriverManager.registerDriver( myDriver );
              */
 
-            // 加载一下这个类就可以注册驱动,因为mysql Driver类的静态代码块中已经调用了registerDriver()来注册驱动程序.
+            // 加载一下这个类就可以注册驱动,因为mysql Driver类的静态代码块中已经调用了DriverManager.registerDriver()来注册驱动程序.
             Class.forName(driver);
-            // 获取数据库连接
+            // 获取数据库连接,DriverManager内部已经注册了驱动，再用DriverManager来创建连接即可
             conn = DriverManager.getConnection(url,user,password);
             System.out.println("JDBC successfully connected with "+conn);
             return conn;

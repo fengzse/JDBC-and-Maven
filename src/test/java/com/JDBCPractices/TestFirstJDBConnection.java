@@ -2,7 +2,10 @@ package com.JDBCPractices;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+import com.JDBCUtils.JDBC3P0Pool;
+import com.JDBCUtils.JDBCDruidPool;
 import com.JDBCUtils.JDBCUtil;
+import com.JDBCUtils.JdbcDBCPool;
 import com.JDBClasses.CustomerOrders;
 import com.JDBClasses.Customers;
 import org.junit.jupiter.api.Test;
@@ -116,5 +119,32 @@ public class TestFirstJDBConnection {
             }
         }
 
+    }
+
+    @Test
+    void TestGetCpConnection(){
+        try {
+            JDBC3P0Pool.getCpConnector();
+        }catch (SQLException e){
+            e.printStackTrace();
+        }
+    }
+
+    @Test
+    void TestGetDBCPConn(){
+        try {
+            JdbcDBCPool.getDBCPConnector();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
+    @Test
+    void TestDruidConnector(){
+        try {
+            JDBCDruidPool.getDruidConnector();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
     }
 }
